@@ -1,27 +1,31 @@
 --batch_0123456789
-Content-Type: application/http 
+Content-Type: application/http
+Content-ID: <item1:1111> 
 Content-Transfer-Encoding:binary
 
-POST /calculator/Actions/Reset
-Host: host
+POST /calculator/Actions/Reset HTTP/1.1
 
 --batch_0123456789
-Content-Type: application/http 
+Content-Type: application/http
+Content-ID: <item2:2222> 
 Content-Transfer-Encoding:binary
 
-POST /calculator/Actions/Calculator.Add
-Host: host
+POST /calculator/Actions/Calculator.Add HTTP/1.1
+Content-Type: application/json
+Content-Length: -1
 
 {
     "Value": 1
 }
 
 --batch_0123456789
-Content-Type: application/http 
+Content-Type: application/http
+Content-ID: <item3:3333> 
 Content-Transfer-Encoding:binary
 
-POST /calculator/Actions/Calculator.Add
-Host: host
+POST /calculator/Actions/Calculator.Add HTTP/1.1
+Content-Type: application/json
+Content-Length: -1
 
 {
     "Value": 2

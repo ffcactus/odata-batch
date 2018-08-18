@@ -1,12 +1,17 @@
 package controller
 
 import (
+	"bufio"
+	"encoding/json"
+	"fmt"
+	"github.com/astaxie/beego"
 	"io"
 	"io/ioutil"
-	"fmt"
+	"log"
+	"mime"
+	"mime/multipart"
 	"net/http"
-	"encoding/json"
-	"github.com/astaxie/beego"
+	"strings"
 )
 
 var (
@@ -15,12 +20,12 @@ var (
 
 // OperationValue is the request DTO for the action supported by calculator service.
 type OperationValue struct {
-	Value float64	`json:"Value"`
+	Value float64 `json:"Value"`
 }
 
 // ResultValue is the response DTO for the action supported by calculator service.
 type ResultValue struct {
-	Result float64	`json:"Result"`
+	Result float64 `json:"Result"`
 }
 
 // Calculator is the controller for Calculator service.
@@ -30,34 +35,71 @@ type Calculator struct {
 
 // Batch is the entry for /$batch.
 func (c *Calculator) Batch() {
-	fmt.Printf("Batch start.\n")
-	m, err := c.Ctx.Request.MultipartReader()
+	log.Printf("Batch start.\n")
+	// make sure it's multipart/mixed.
+	mediaType, params, err := mime.ParseMediaType(
+		c.Ctx.Request.Header.Get("Content-Type"),
+	)
 	if err != nil {
-		fmt.Printf("MultiPartReader() failed, err = %v\n", err)
+		log.Printf("ParseMediaType() failed, err =%v\n", err)
 		c.returnError()
 	}
+	if mediaType != "multipart/mixed" {
+		log.Printf("Not supported media type. %s\n", mediaType)
+		c.returnError()
+	}
+	// get the request.
+	body, err := ioutil.ReadAll(c.Ctx.Request.Body)
+	if err != nil {
+		log.Printf("Read request failed, err = %v\n", err)
+		c.returnError()
+	}
+	mr := multipart.NewReader(strings.NewReader(string(body)), params["boundary"])
+	// for each part convert it to request.
 	for {
-		p, err := m.NextPart()
+		p, err := mr.NextPart()
 		if err == io.EOF {
 			c.returnResult()
-			return
+			break
 		}
 		if err != nil {
-			fmt.Printf("NextPart() failed, err = %v\n", err)
+			log.Printf("NextPart() failed, err = %v\n", err)
+			c.returnError()
+			break
 		}
-		content, err := ioutil.ReadAll(p)
-		if err != nil {
-			fmt.Printf("ReadAll() failed, err = %v\n", err)
+		// readbuffer := bytes.NewBuffer([]byte("GET / HTTP/1.1\r\nheader:foo\r\n\r\n"))
+		// reader := bufio.NewReader(readbuffer)
+		// req, err := http.ReadRequest(reader)
+		// log.Printf("method: %s, host: %s\n", req.Method, req.Host)
+
+		_bufio := bufio.NewReader(p)
+		for {
+			b, err := _bufio.ReadByte()
+			if err == io.EOF {
+				break
+			}
+			if b == '\r' {
+				fmt.Printf("(\r")
+			} else if b == '\n' {
+				fmt.Printf(")\n")
+			} else {
+				fmt.Printf("%c", b)
+			}
 		}
-		fmt.Printf("%q\n", content)
+		// localRequest, err := http.ReadRequest(_bufio)
+		// if err != io.EOF && err != nil {
+		// 	log.Printf("ReadRequest() failed, err = %v\n", err)
+		// 	c.returnError()
+		// 	break
+		// }
+		// log.Printf("method: %s, host: %s\n", localRequest.Method, localRequest.Host)
 	}
-	c.returnResult()
 }
 
 // Reset the value to 0.0f.
 func (c *Calculator) Reset() {
-	fmt.Printf("Reset.\n")
-	value = 0;
+	log.Printf("Reset.\n")
+	value = 0
 	c.returnResult()
 }
 
@@ -66,9 +108,9 @@ func (c *Calculator) Add() {
 	if opValue, err := c.getOperationValue(); err != nil {
 		c.returnError()
 	} else {
-		fmt.Printf("%f + %f = ", value, opValue)
+		log.Printf("%f + %f = ", value, opValue)
 		value += opValue
-		fmt.Printf("%f\n", value)
+		log.Printf("%f\n", value)
 		c.returnResult()
 	}
 }
@@ -78,11 +120,11 @@ func (c *Calculator) Sub() {
 	if opValue, err := c.getOperationValue(); err != nil {
 		c.returnError()
 	} else {
-		fmt.Printf("%f - %f = ", value, opValue)
+		log.Printf("%f - %f = ", value, opValue)
 		value -= opValue
-		fmt.Printf("%f\n", value)
+		log.Printf("%f\n", value)
 		c.returnResult()
-	}	
+	}
 }
 
 // Mul do the multiplication operation.
@@ -90,11 +132,11 @@ func (c *Calculator) Mul() {
 	if opValue, err := c.getOperationValue(); err != nil {
 		c.returnError()
 	} else {
-		fmt.Printf("%f * %f = ", value, opValue)
+		log.Printf("%f * %f = ", value, opValue)
 		value *= opValue
-		fmt.Printf("%f\n", value)
+		log.Printf("%f\n", value)
 		c.returnResult()
-	}	
+	}
 }
 
 // Div do the division operation.
@@ -102,11 +144,11 @@ func (c *Calculator) Div() {
 	if opValue, err := c.getOperationValue(); err != nil || opValue == 0 {
 		c.returnError()
 	} else {
-		fmt.Printf("%f / %f = ", value, opValue)
+		log.Printf("%f / %f = ", value, opValue)
 		value /= opValue
-		fmt.Printf("%f\n", value)
+		log.Printf("%f\n", value)
 		c.returnResult()
-	}	
+	}
 }
 
 func (c *Calculator) getOperationValue() (float64, error) {

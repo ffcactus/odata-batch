@@ -1,4 +1,3 @@
 url = "localhost:3000/calculator/$batch"
-header = "Content-type: multipart/form-data; boundary=batch_0123456789"
-header = "Authorization: Bearer authorization_token"
+header = "Content-type: multipart/mixed; boundary=batch_0123456789"
 data-binary = "@batch-body"
