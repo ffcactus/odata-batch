@@ -1,0 +1,30 @@
+--batch_0123456789
+Content-Type: application/http 
+Content-Transfer-Encoding:binary
+
+POST /calculator/Actions/Reset
+Host: host
+
+--batch_0123456789
+Content-Type: application/http 
+Content-Transfer-Encoding:binary
+
+POST /calculator/Actions/Calculator.Add
+Host: host
+
+{
+    "Value": 1
+}
+
+--batch_0123456789
+Content-Type: application/http 
+Content-Transfer-Encoding:binary
+
+POST /calculator/Actions/Calculator.Add
+Host: host
+
+{
+    "Value": 2
+}
+
+--batch_0123456789--
