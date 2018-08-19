@@ -3,7 +3,6 @@ package controller
 import (
 	"bufio"
 	"encoding/json"
-	"fmt"
 	"github.com/astaxie/beego"
 	"io"
 	"io/ioutil"
@@ -73,26 +72,13 @@ func (c *Calculator) Batch() {
 		// log.Printf("method: %s, host: %s\n", req.Method, req.Host)
 
 		_bufio := bufio.NewReader(p)
-		for {
-			b, err := _bufio.ReadByte()
-			if err == io.EOF {
-				break
-			}
-			if b == '\r' {
-				fmt.Printf("(\r")
-			} else if b == '\n' {
-				fmt.Printf(")\n")
-			} else {
-				fmt.Printf("%c", b)
-			}
+		localRequest, err := http.ReadRequest(_bufio)
+		if err != io.EOF && err != nil {
+			log.Printf("ReadRequest() failed, err = %v\n", err)
+			c.returnError()
+			break
 		}
-		// localRequest, err := http.ReadRequest(_bufio)
-		// if err != io.EOF && err != nil {
-		// 	log.Printf("ReadRequest() failed, err = %v\n", err)
-		// 	c.returnError()
-		// 	break
-		// }
-		// log.Printf("method: %s, host: %s\n", localRequest.Method, localRequest.Host)
+		log.Printf("method: %s, host: %s\n", localRequest.Method, localRequest.Host)
 	}
 }
 
@@ -154,6 +140,7 @@ func (c *Calculator) Div() {
 func (c *Calculator) getOperationValue() (float64, error) {
 	request := &OperationValue{}
 	if err := json.Unmarshal(c.Ctx.Input.RequestBody, request); err != nil {
+		log.Printf("Controller get operation value failed, err = %v\n", err)
 		return 0, err
 	}
 	return request.Value, nil

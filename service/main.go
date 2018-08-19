@@ -2,7 +2,7 @@ package main
 
 import (
 	"github.com/astaxie/beego"
-	"odata-batch/controller"
+	"odata-batch/service/controller"
 )
 
 func main() {
